@@ -6,37 +6,34 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+
+        uses: actions/checkout@v4
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
 
-      - name: Install XcodeGen
-        run: brew install xcodegen
-
-      - name: Generate Project
-        run: |
-          cd FloatingTimerApp || mkdir FloatingTimerApp
-          cd FloatingTimerApp
-          xcodegen
-
-      - name: Build App
-        run: |
-          cd FloatingTimerApp
-          xcodebuild \
-            -project FloatingTimer.xcodeproj \
-            -scheme FloatingTimer \
-            -sdk iphoneos \
-            -configuration Release \
-            CODE_SIGNING_ALLOWED=NO
-
-      - name: Package IPA
-        run: |
-          mkdir Payload
-          cp -r FloatingTimerApp/build/Release-iphoneos/FloatingTimer.app Payload/
-          zip -r FloatingTimer.ipa Payload
-
-      - name: Upload IPA
-        uses: actions/upload-artifact@v4
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
         with:
+          xcode-version: '14.3'  # 或者你本地 Xcode 版本
+
+      - name: Build IPA
+        run: |
+          mkdir FloatingTimerApp
+          cd FloatingTimerApp
+          cat > project.yml << 'EOF'
           name: FloatingTimer
-          path: FloatingTimer.ipa
+          options:
+            bundleIdPrefix: com.floating
+          targets:
+            FloatingTimer:
+              type: application
+              platform: iOS
+              sources:
+                - ../FloatingView.swift
+                - ../ViewController.swift
+                - ../AppDelegate.swift
+                - ../SceneDelegate.swift
+          EOF
+          xcodegen generate
+          xcodebuild -scheme FloatingTimer -sdk iphoneos -configuration Release archive -archivePath FloatingTimer.xcarchive
+          xcodebuild -exportArchive -archivePath FloatingTimer.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath ./build

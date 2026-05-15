@@ -60,17 +60,15 @@ jobs:
           -configuration Release \
           CODE_SIGNING_ALLOWED=NO
 
-      - name: Package IPA
-        run: |
+    - name: Package IPA
+  run: |
+    mkdir Payload
+    find . -name "*.app"
+    cp -r build/Release-iphoneos/FloatingTimer.app Payload
+    zip -r FloatingTimer.ipa Payload
 
-          mkdir Payload
-
-          cp -r FloatingTimerApp/build/Release-iphoneos/FloatingTimer.app Payload/
-
-          zip -r FloatingTimer.ipa Payload
-
-      - name: Upload IPA
-        uses: actions/upload-artifact@v4
-        with:
-          name: FloatingTimer
-          path: FloatingTimer.ipa
+- name: Upload IPA
+  uses: actions/upload-artifact@v4
+  with:
+    name: FloatingTimer
+    path: FloatingTimer.ipa

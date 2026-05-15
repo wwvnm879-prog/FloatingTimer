@@ -1,0 +1,76 @@
+name: Build IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create Xcode Project
+        run: |
+
+          mkdir FloatingTimerApp
+          cd FloatingTimerApp
+
+          cat > project.yml << 'EOF'
+          name: FloatingTimer
+
+          options:
+            bundleIdPrefix: com.floating
+
+          targets:
+            FloatingTimer:
+              type: application
+              platform: iOS
+
+              deploymentTarget: "15.0"
+
+              sources:
+                - ../
+
+              settings:
+                PRODUCT_BUNDLE_IDENTIFIER: com.floating.timer
+
+              info:
+                path: ../Info.plist
+          EOF
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Project
+        run: |
+          cd FloatingTimerApp
+          xcodegen
+
+      - name: Build App
+        run: |
+
+          cd FloatingTimerApp
+
+          xcodebuild \
+          -project FloatingTimer.xcodeproj \
+          -scheme FloatingTimer \
+          -sdk iphoneos \
+          -configuration Release \
+          CODE_SIGNING_ALLOWED=NO
+
+      - name: Package IPA
+        run: |
+
+          mkdir Payload
+
+          cp -r FloatingTimerApp/build/Release-iphoneos/FloatingTimer.app Payload/
+
+          zip -r FloatingTimer.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: FloatingTimer
+          path: FloatingTimer.ipa

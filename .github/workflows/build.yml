@@ -23,11 +23,8 @@ jobs:
             FloatingTimer:
               type: application
               platform: iOS
-              sources:
-                - ../FloatingView.swift
-                - ../AppDelegate.swift
-                - ../SceneDelegate.swift
-                - ../ViewController.swift
+          sources:
+            - FloatingView.swift
           EOF
 
       - name: Install XcodeGen
